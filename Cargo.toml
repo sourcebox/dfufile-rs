@@ -7,6 +7,6 @@ description = "DFU file processing"
 repository = "https://github.com/sourcebox/dfufile-rs"
 license = "MIT"
 keywords = ["embedded", "dfu", "dfuse", "stm32"]
-categories = ["embedded"]
+categories = ["parsing"]
 
 [dependencies]
