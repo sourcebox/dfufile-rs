@@ -3,6 +3,7 @@ name = "dfufile"
 version = "0.1.0"
 authors = ["Oliver Rockstedt <info@sourcebox.de>"]
 edition = "2021"
+rust-version = "1.58"
 description = "DFU file processing"
 repository = "https://github.com/sourcebox/dfufile-rs"
 license = "MIT"
