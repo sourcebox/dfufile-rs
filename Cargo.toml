@@ -10,3 +10,4 @@ keywords = ["embedded", "dfu", "dfuse", "stm32"]
 categories = ["parsing"]
 
 [dependencies]
+anyhow ="1.0"

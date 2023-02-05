@@ -11,8 +11,7 @@ pub mod dfuse;
 
 use std::io::{Read, Seek};
 
-/// Result with dynamic error variant.
-pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+use anyhow::{anyhow, Result};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -56,7 +55,7 @@ impl DfuFile {
 
         // File must be at least as large as the suffix
         if file_size < SUFFIX_LENGTH as u64 {
-            return Err(Box::new(Error::InsufficientFileSize));
+            return Err(anyhow!(Error::InsufficientFileSize));
         }
 
         let content = if dfuse::detect(&mut file)? {
@@ -221,7 +220,7 @@ impl Suffix {
         let data = Self::from_bytes(&buffer);
 
         if &data.ucDFUSignature != "UFD" {
-            return Err(Box::new(Error::InvalidSuffixSignature));
+            return Err(anyhow!(Error::InvalidSuffixSignature));
         }
 
         Ok(data)

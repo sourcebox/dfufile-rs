@@ -6,8 +6,7 @@ use std::io::{Read, Seek};
 
 use crate::Suffix;
 
-/// Result with dynamic error variant.
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+use anyhow::{anyhow, Result};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -46,7 +45,7 @@ impl Content {
 
         // File must be at least as large as the prefix + standard suffix
         if file_size < (PREFIX_LENGTH + 16) as u64 {
-            return Err(Box::new(Error::InsufficientFileSize));
+            return Err(anyhow!(Error::InsufficientFileSize));
         }
 
         let prefix = Prefix::from_file(file)?;
@@ -147,7 +146,7 @@ impl Prefix {
         let data = Self::from_bytes(&buffer);
 
         if &data.szSignature != "DfuSe" {
-            return Err(Box::new(Error::InvalidPrefixSignature));
+            return Err(anyhow!(Error::InvalidPrefixSignature));
         }
 
         Ok(data)
@@ -306,7 +305,7 @@ impl TargetPrefix {
         let data = Self::from_bytes(&buffer);
 
         if &data.szSignature != "Target" {
-            return Err(Box::new(Error::InvalidTargetPrefixSignature));
+            return Err(anyhow!(Error::InvalidTargetPrefixSignature));
         }
 
         Ok(data)
