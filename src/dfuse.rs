@@ -12,7 +12,7 @@ use anyhow::{anyhow, Result};
 
 /// Check if the file is a DfuSe file.
 pub fn detect(file: &mut std::fs::File) -> Result<bool> {
-    file.seek(std::io::SeekFrom::Start(0))?;
+    file.rewind()?;
     let mut signature = [0; 5];
     file.read_exact(&mut signature)?;
 
@@ -139,7 +139,7 @@ impl Prefix {
 
     /// Creates a new prefix from reading a file.
     pub fn from_file(file: &mut std::fs::File) -> Result<Self> {
-        file.seek(std::io::SeekFrom::Start(0))?;
+        file.rewind()?;
         let mut buffer = [0; PREFIX_LENGTH];
         file.read_exact(&mut buffer)?;
 

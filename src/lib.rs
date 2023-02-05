@@ -78,7 +78,7 @@ impl DfuFile {
     /// which contain the checksum itself.
     pub fn calc_crc(&mut self) -> Result<u32> {
         let file_size = self.file.seek(std::io::SeekFrom::End(0))?;
-        self.file.seek(std::io::SeekFrom::Start(0))?;
+        self.file.rewind()?;
 
         const CHUNK_SIZE: u64 = 1024;
         let mut file_pos = 0;
