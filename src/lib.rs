@@ -57,7 +57,7 @@ impl DfuFile {
         }
 
         let content = if dfuse::detect(&mut file)? {
-            Content::DfuSe(dfuse::Content::from_file(&mut file)?)
+            Content::Dfuse(dfuse::Content::from_file(&mut file)?)
         } else {
             Content::Plain
         };
@@ -110,7 +110,7 @@ pub enum Content {
     Plain,
 
     /// DfuSe file with extensions from STMicroelectronics.
-    DfuSe(dfuse::Content),
+    Dfuse(dfuse::Content),
 }
 
 impl std::fmt::Display for Content {
@@ -120,7 +120,7 @@ impl std::fmt::Display for Content {
             "{}",
             match self {
                 Self::Plain => "Plain".to_string(),
-                Self::DfuSe(content) => format!("DfuSe v{}", content.prefix.bVersion),
+                Self::Dfuse(content) => format!("DfuSe v{}", content.prefix.bVersion),
             }
         )
     }

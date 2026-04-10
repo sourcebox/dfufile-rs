@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Renamed `Content::DfuSe` variant to `Content::Dfuse`.
 - Use `thiserror` for error handling.
 - Set Rust edition to 2024.
 
