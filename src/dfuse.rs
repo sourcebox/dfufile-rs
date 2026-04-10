@@ -4,7 +4,7 @@
 
 use std::io::{Read, Seek};
 
-use crate::Suffix;
+use crate::{SUFFIX_LENGTH, Suffix};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -44,7 +44,7 @@ impl Content {
         let file_size = file.seek(std::io::SeekFrom::End(0))?;
 
         // File must be at least as large as the prefix + standard suffix
-        if file_size < (PREFIX_LENGTH + 16) as u64 {
+        if file_size < (PREFIX_LENGTH + SUFFIX_LENGTH) as u64 {
             return Err(Error::InsufficientFileSize);
         }
 
