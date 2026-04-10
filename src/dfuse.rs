@@ -189,7 +189,7 @@ impl Image {
 
     /// Creates a new image by reading a file.
     ///
-    /// The `file_pos` argument must be set to the postion inside the file as
+    /// The `file_pos` argument must be set to the position inside the file as
     /// offset from the start and is updated according to the number of bytes read.
     pub fn from_file(file: &mut std::fs::File, file_pos: &mut u64) -> Result<Self, Error> {
         let target_prefix = TargetPrefix::from_file(file, file_pos)?;
@@ -293,7 +293,7 @@ impl TargetPrefix {
 
     /// Creates a new target prefix by reading a file.
     ///
-    /// The `file_pos` argument must be set to the postion inside the file as
+    /// The `file_pos` argument must be set to the position inside the file as
     /// offset from the start and is updated according to the number of bytes read.
     pub fn from_file(file: &mut std::fs::File, file_pos: &mut u64) -> Result<Self, Error> {
         file.seek(std::io::SeekFrom::Start(*file_pos))?;
@@ -366,7 +366,7 @@ impl ImageElement {
 
     /// Creates a new image element by reading a file.
     ///
-    /// The `file_pos` argument must be set to the postion inside the file as
+    /// The `file_pos` argument must be set to the position inside the file as
     /// offset from the start and is updated according to the number of bytes read.
     pub fn from_file(file: &mut std::fs::File, file_pos: &mut u64) -> Result<Self, Error> {
         file.seek(std::io::SeekFrom::Start(*file_pos))?;
