@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Use `thiserror` for error handling.
 - Set Rust edition to 2024.
 
 ## [0.2.0] - 2023-02-05

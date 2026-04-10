@@ -6,17 +6,17 @@ use std::io::{Read, Seek};
 
 use crate::Suffix;
 
-use anyhow::{anyhow, Result};
-
 ////////////////////////////////////////////////////////////////////////////////
 
 /// Check if the file is a DfuSe file.
-pub fn detect(file: &mut std::fs::File) -> Result<bool> {
+pub fn detect(file: &mut std::fs::File) -> Result<bool, Error> {
     file.rewind()?;
     let mut signature = [0; 5];
     file.read_exact(&mut signature)?;
 
-    let suffix = Suffix::from_file(file)?;
+    let Ok(suffix) = Suffix::from_file(file) else {
+        return Err(Error::InvalidSuffix);
+    };
 
     Ok(&signature == b"DfuSe" && suffix.bcdDFU == 0x011A)
 }
@@ -40,12 +40,12 @@ impl Content {
     }
 
     /// Creates a new instance with data read from file.
-    pub fn from_file(file: &mut std::fs::File) -> Result<Self> {
+    pub fn from_file(file: &mut std::fs::File) -> Result<Self, Error> {
         let file_size = file.seek(std::io::SeekFrom::End(0))?;
 
         // File must be at least as large as the prefix + standard suffix
         if file_size < (PREFIX_LENGTH + 16) as u64 {
-            return Err(anyhow!(Error::InsufficientFileSize));
+            return Err(Error::InsufficientFileSize);
         }
 
         let prefix = Prefix::from_file(file)?;
@@ -138,7 +138,7 @@ impl Prefix {
     }
 
     /// Creates a new prefix from reading a file.
-    pub fn from_file(file: &mut std::fs::File) -> Result<Self> {
+    pub fn from_file(file: &mut std::fs::File) -> Result<Self, Error> {
         file.rewind()?;
         let mut buffer = [0; PREFIX_LENGTH];
         file.read_exact(&mut buffer)?;
@@ -146,7 +146,7 @@ impl Prefix {
         let data = Self::from_bytes(&buffer);
 
         if &data.szSignature != "DfuSe" {
-            return Err(anyhow!(Error::InvalidPrefixSignature));
+            return Err(Error::InvalidPrefixSignature);
         }
 
         Ok(data)
@@ -191,7 +191,7 @@ impl Image {
     ///
     /// The `file_pos` argument must be set to the postion inside the file as
     /// offset from the start and is updated according to the number of bytes read.
-    pub fn from_file(file: &mut std::fs::File, file_pos: &mut u64) -> Result<Self> {
+    pub fn from_file(file: &mut std::fs::File, file_pos: &mut u64) -> Result<Self, Error> {
         let target_prefix = TargetPrefix::from_file(file, file_pos)?;
         let mut image_elements = Vec::new();
 
@@ -295,7 +295,7 @@ impl TargetPrefix {
     ///
     /// The `file_pos` argument must be set to the postion inside the file as
     /// offset from the start and is updated according to the number of bytes read.
-    pub fn from_file(file: &mut std::fs::File, file_pos: &mut u64) -> Result<Self> {
+    pub fn from_file(file: &mut std::fs::File, file_pos: &mut u64) -> Result<Self, Error> {
         file.seek(std::io::SeekFrom::Start(*file_pos))?;
         let mut buffer = [0; TARGET_PREFIX_LENGTH];
         file.read_exact(&mut buffer)?;
@@ -305,7 +305,7 @@ impl TargetPrefix {
         let data = Self::from_bytes(&buffer);
 
         if &data.szSignature != "Target" {
-            return Err(anyhow!(Error::InvalidTargetPrefixSignature));
+            return Err(Error::InvalidTargetPrefixSignature);
         }
 
         Ok(data)
@@ -368,7 +368,7 @@ impl ImageElement {
     ///
     /// The `file_pos` argument must be set to the postion inside the file as
     /// offset from the start and is updated according to the number of bytes read.
-    pub fn from_file(file: &mut std::fs::File, file_pos: &mut u64) -> Result<Self> {
+    pub fn from_file(file: &mut std::fs::File, file_pos: &mut u64) -> Result<Self, Error> {
         file.seek(std::io::SeekFrom::Start(*file_pos))?;
         let mut buffer = [0; IMAGE_ELEMENT_LENGTH];
         file.read_exact(&mut buffer)?;
@@ -393,7 +393,7 @@ impl ImageElement {
         file: &mut std::fs::File,
         position: u32,
         buffer: &mut [u8],
-    ) -> Result<usize> {
+    ) -> Result<usize, Error> {
         let file_pos = self.data_position + (position as u64);
         file.seek(std::io::SeekFrom::Start(file_pos))?;
         let read_size = file.read(buffer)?;
@@ -407,30 +407,25 @@ impl ImageElement {
 ////////////////////////////////////////////////////////////////////////////////
 
 /// Parsing errors.
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     /// File prefix signature is not "DfuSe".
+    #[error("Invalid file prefix signature.")]
     InvalidPrefixSignature,
 
+    /// File suffix invalid or can't be read.
+    #[error("Invalid file suffix.")]
+    InvalidSuffix,
+
     /// Target prefix signature is not "Target".
+    #[error("Invalid target prefix signature.")]
     InvalidTargetPrefixSignature,
 
     /// File is too small (smaller than prefix + suffix size).
+    #[error("File size is to small to contain prefix and suffix")]
     InsufficientFileSize,
-}
 
-impl std::error::Error for Error {}
-
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::InvalidPrefixSignature => "Invalid file prefix signature",
-                Self::InvalidTargetPrefixSignature => "Invalid target prefix signature",
-                Self::InsufficientFileSize => "File size is to small to contain prefix and suffix",
-            }
-        )
-    }
+    /// I/O error.
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
 }

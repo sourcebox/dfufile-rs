@@ -11,8 +11,6 @@ pub mod dfuse;
 
 use std::io::{Read, Seek};
 
-use anyhow::{anyhow, Result};
-
 ////////////////////////////////////////////////////////////////////////////////
 
 /// File handle
@@ -48,14 +46,14 @@ impl DfuFile {
     }
 
     /// Open existing file.
-    pub fn open<P: AsRef<std::path::Path> + Clone>(path: P) -> Result<Self> {
+    pub fn open<P: AsRef<std::path::Path> + Clone>(path: P) -> Result<Self, Error> {
         let mut file = std::fs::File::open(path.clone())?;
 
         let file_size = file.seek(std::io::SeekFrom::End(0))?;
 
         // File must be at least as large as the suffix
         if file_size < SUFFIX_LENGTH as u64 {
-            return Err(anyhow!(Error::InsufficientFileSize));
+            return Err(Error::InsufficientFileSize);
         }
 
         let content = if dfuse::detect(&mut file)? {
@@ -76,7 +74,7 @@ impl DfuFile {
 
     /// Calculate the CRC32 checksum of whole file excluding the last 4 bytes,
     /// which contain the checksum itself.
-    pub fn calc_crc(&mut self) -> Result<u32> {
+    pub fn calc_crc(&mut self) -> Result<u32, Error> {
         let file_size = self.file.seek(std::io::SeekFrom::End(0))?;
         self.file.rewind()?;
 
@@ -212,7 +210,7 @@ impl Suffix {
     }
 
     /// Creates a new suffix from reading a file.
-    pub fn from_file(file: &mut std::fs::File) -> Result<Self> {
+    pub fn from_file(file: &mut std::fs::File) -> Result<Self, Error> {
         file.seek(std::io::SeekFrom::End(-(SUFFIX_LENGTH as i64)))?;
         let mut buffer = [0; SUFFIX_LENGTH];
         file.read_exact(&mut buffer)?;
@@ -220,7 +218,7 @@ impl Suffix {
         let data = Self::from_bytes(&buffer);
 
         if &data.ucDFUSignature != "UFD" {
-            return Err(anyhow!(Error::InvalidSuffixSignature));
+            return Err(Error::InvalidSuffixSignature);
         }
 
         Ok(data)
@@ -230,26 +228,21 @@ impl Suffix {
 ////////////////////////////////////////////////////////////////////////////////
 
 /// Parsing errors.
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     /// File suffix signature is not "UFD" (DFU reversed).
+    #[error("Invalid file suffix signature.")]
     InvalidSuffixSignature,
 
     /// File is too small (smaller than suffix size).
+    #[error("File size is to small to contain suffix.")]
     InsufficientFileSize,
-}
 
-impl std::error::Error for Error {}
+    /// I/O error.
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::InvalidSuffixSignature => "Invalid file suffix signature",
-                Self::InsufficientFileSize => "File size is to small to contain suffix",
-            }
-        )
-    }
+    /// DfuSE error.
+    #[error(transparent)]
+    Dfuse(#[from] dfuse::Error),
 }
