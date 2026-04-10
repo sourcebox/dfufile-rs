@@ -1,6 +1,6 @@
 [package]
 name = "dfufile"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Oliver Rockstedt <info@sourcebox.de>"]
 edition = "2024"
 rust-version = "1.85"
