@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `DfuFile::size` function.
+- `DfuFile::read_raw_at` function.
+
 ### Changed
 
 - Renamed `Content::DfuSe` variant to `Content::Dfuse`.

@@ -72,10 +72,30 @@ impl DfuFile {
         ))
     }
 
+    /// Returns the overall file size in bytes.
+    pub fn size(&mut self) -> Result<u64, Error> {
+        let size = self.file.seek(std::io::SeekFrom::End(0))?;
+
+        Ok(size)
+    }
+
+    /// Reads raw content from the file into a buffer.
+    ///
+    /// The `position` argument is relative to the start of the file.
+    /// The function tries to fill the buffer completely and returns the
+    /// number of valid bytes in the buffer. This may be less than the buffer
+    /// size in case of EOF.
+    pub fn read_raw_at(&mut self, position: u64, buffer: &mut [u8]) -> Result<usize, Error> {
+        self.file.seek(std::io::SeekFrom::Start(position))?;
+        let read_size = self.file.read(buffer)?;
+
+        Ok(read_size)
+    }
+
     /// Calculate the CRC32 checksum of whole file excluding the last 4 bytes,
     /// which contain the checksum itself.
     pub fn calc_crc(&mut self) -> Result<u32, Error> {
-        let file_size = self.file.seek(std::io::SeekFrom::End(0))?;
+        let file_size = self.size()?;
         self.file.rewind()?;
 
         const CHUNK_SIZE: u64 = 1024;
